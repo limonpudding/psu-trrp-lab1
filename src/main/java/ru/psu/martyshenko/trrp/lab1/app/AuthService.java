@@ -20,7 +20,7 @@ public class AuthService {
 
     public Credential auth(NetHttpTransport HTTP_TRANSPORT, String userName) throws IOException {
         // Load client secrets.
-        InputStream in = CalendarQuickstart.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
+        InputStream in = AuthService.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
         if (in == null) {
             throw new FileNotFoundException("Resource not found: " + CREDENTIALS_FILE_PATH);
         }
