@@ -15,10 +15,9 @@ import static ru.psu.martyshenko.trrp.lab1.app.GlobalSettings.TOKENS_DIRECTORY_P
 
 public class Application {
 
-    private static Scanner in = new Scanner(System.in);
+    private static final Scanner in = new Scanner(System.in);
     private static NetHttpTransport HTTP_TRANSPORT = null;
-    private static AuthService authService = new AuthService();
-    private static EventService eventService = null;
+    private static final AuthService authService = new AuthService();
     private static Credential credential = null;
 
     public static void main(String[] args) {
@@ -28,6 +27,7 @@ public class Application {
     private static void mainMenu() {
         System.out.println("Выберите опцию:");
         System.out.println("1. Войти в учетную запись");
+        System.out.println("2. Удалить учетную запись");
         System.out.println("0. Выход из приложения");
         int option = Integer.parseInt(in.nextLine());
         while (option != 0) {
@@ -35,6 +35,10 @@ public class Application {
                 case 1:
                     selectProfile();
                     selectAction();
+                    option = 0;
+                    break;
+                case 2:
+//                    deleteProfile();
                     option = 0;
                     break;
                 default:
@@ -46,17 +50,18 @@ public class Application {
     }
 
     private static void selectProfile() {
+        ArrayList<String> storedCredential;
+        try {
+            FileDataStoreFactory storedCredentialData = new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH));
+            storedCredential = new ArrayList<>(storedCredentialData.getDataStore("StoredCredential").keySet());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+
         System.out.println("Выберите действие:");
         System.out.println("1. Вход в учётную запись Google");
         System.out.println("Использовать сохранённую учётную запись Google:");
-        ArrayList<String> storedCredential = null;
-        FileDataStoreFactory fdsf = null;
-        try {
-            fdsf = new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH));
-            storedCredential = new ArrayList<String>(fdsf.getDataStore("StoredCredential").keySet());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         int counter = 1;
         for (String key : storedCredential) {
             counter += 1;
@@ -99,7 +104,7 @@ public class Application {
     private static void selectAction() {
         System.out.println("Успешная авторизация!");
         actionMenuForLoggedIn();
-        eventService = new EventService(HTTP_TRANSPORT, credential);
+        EventService eventService = new EventService(HTTP_TRANSPORT, credential);
         in.reset();
         int option = Integer.parseInt(in.nextLine());
         while (option != 0) {

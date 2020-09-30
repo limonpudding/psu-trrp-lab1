@@ -15,8 +15,8 @@ import static ru.psu.martyshenko.trrp.lab1.app.GlobalSettings.*;
 
 public class EventService {
 
-    private Calendar calendar = null;
-    private String calendarId = null;
+    private final Calendar calendar;
+    private final String calendarId;
 
     public EventService(NetHttpTransport HTTP_TRANSPORT, Credential auth) {
         calendar = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY, auth)
@@ -61,7 +61,7 @@ public class EventService {
     }
 
     public Event findEvent(String eventId) {
-        Calendar.Events.Get events = null;
+        Calendar.Events.Get events;
         Event event = null;
         try {
             events = calendar.events().get(calendarId, eventId);
