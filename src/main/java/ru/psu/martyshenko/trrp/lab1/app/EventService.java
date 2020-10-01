@@ -1,6 +1,7 @@
 package ru.psu.martyshenko.trrp.lab1.app;
 
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
@@ -9,20 +10,27 @@ import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.Events;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.List;
 
 import static ru.psu.martyshenko.trrp.lab1.app.GlobalSettings.*;
 
 public class EventService {
 
-    private final Calendar calendar;
-    private final String calendarId;
+    private Calendar calendar = null;
+    private String calendarId = null;
 
-    public EventService(NetHttpTransport HTTP_TRANSPORT, Credential auth) {
-        calendar = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY, auth)
-                .setApplicationName(APPLICATION_NAME)
-                .build();
-        calendarId = "primary";
+    public EventService(Credential auth) {
+        NetHttpTransport HTTP_TRANSPORT;
+        try {
+            HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+            calendar = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY, auth)
+                    .setApplicationName(APPLICATION_NAME)
+                    .build();
+            calendarId = "primary";
+        } catch (GeneralSecurityException | IOException e) {
+            System.out.println("Ошибка при попытке установить соединение!");
+        }
     }
 
     public void showEvents() throws IOException {

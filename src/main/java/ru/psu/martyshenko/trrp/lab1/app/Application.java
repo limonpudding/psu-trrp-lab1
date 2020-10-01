@@ -31,7 +31,21 @@ public class Application {
 
     private static void mainMenu() {
         int option;
+        String lastUser = authService.checkLastLogin();
+        boolean isExit;
         do {
+            if (lastUser != null) {
+                try {
+                    credential = authService.auth(lastUser);
+                    isExit = selectAction(lastUser);
+                    if (isExit) {
+                        return;
+                    }
+                    lastUser = null;
+                } catch (IOException e) {
+                    System.out.println("Произошла ошибка при попытке входа с данными последнего пользователя.");
+                }
+            }
             System.out.println("Выберите опцию:");
             System.out.println("1. Войти в учетную запись");
             System.out.println("2. Удалить учетную запись");
@@ -43,7 +57,10 @@ public class Application {
                 case 1:
                     String user = selectProfile();
                     if (user != null) {
-                        selectAction(user);
+                        isExit = selectAction(lastUser);
+                        if (isExit) {
+                            option = 0;
+                        }
                     }
                     break;
                 case 2:
@@ -75,11 +92,7 @@ public class Application {
             System.out.println(counter + ". " + key);
         }
         System.out.println("0. Назад, в меню авторизации");
-        try {
-            HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-        } catch (GeneralSecurityException | IOException e) {
-            System.out.println("Произошла ошибка при попытке создания соединения.");
-        }
+
         int maxOption = 1 + storedCredential.size();
         int option = Integer.parseInt(in.nextLine());
         while (option != 0) {
@@ -87,7 +100,7 @@ public class Application {
                 System.out.println("Придумайте имя для учётной записи:");
                 userName = in.nextLine();
                 try {
-                    credential = authService.auth(HTTP_TRANSPORT, userName);
+                    credential = authService.auth(userName);
                 } catch (IOException e) {
                     System.out.println("Произошла ошибка при попытке авторизации.");
                 }
@@ -96,7 +109,7 @@ public class Application {
                 if (option > 1 && option <= maxOption) {
                     try {
                         userName = storedCredential.get(option - 2);
-                        credential = authService.auth(HTTP_TRANSPORT, userName);
+                        credential = authService.auth(userName);
                     } catch (IOException e) {
                         System.out.println("Произошла ошибка при попытке авторизации.");
                     }
@@ -163,16 +176,17 @@ public class Application {
         return storedCredential;
     }
 
-    private static void selectAction(String user) {
+    private static boolean selectAction(String user) {
         System.out.println("Успешная авторизация, " + user + "!");
         in.reset();
-        EventService eventService = new EventService(HTTP_TRANSPORT, credential);
+        EventService eventService = new EventService(credential);
         int option;
         do {
             actionMenuForLoggedIn();
             option = Integer.parseInt(in.nextLine());
             switch (option) {
                 case 0:
+                    authService.deleteLastLogindata();
                     break;
                 case 1:
                     try {
@@ -200,11 +214,14 @@ public class Application {
                     String eventIdToDelete = in.nextLine();
                     eventService.deleteEvent(eventIdToDelete);
                     break;
+                case 9:
+                    return true;
                 default:
-                    System.out.println("Неверный ввод! Пожалуйста, ведите число от 0 до 4.");
+                    System.out.println("Неверный ввод! Пожалуйста, ведите число от 0 до 4 или 9.");
                     break;
             }
         } while (option != 0);
+        return false;
     }
 
     private static void actionMenuForLoggedIn() {
@@ -214,6 +231,7 @@ public class Application {
         System.out.println("3. Редактировать событие");
         System.out.println("4. Удалить событие");
         System.out.println("0. Выход из учётной записи");
+        System.out.println("9. Выход из приложения");
     }
 
     private static void prepareEventInfo(EventDto eventDto) {

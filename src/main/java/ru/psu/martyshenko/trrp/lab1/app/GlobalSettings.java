@@ -14,4 +14,5 @@ public class GlobalSettings {
     public static final String TOKENS_DIRECTORY_PATH = "tokens";
     public static final List<String> SCOPES = Collections.singletonList(CalendarScopes.CALENDAR);
     public static final String CREDENTIALS_FILE_PATH = "/credentials.json";
+    public static final String LAST_LOGIN_FILE_PATH = "tokens/lastLogin.txt";
 }

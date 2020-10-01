@@ -5,20 +5,26 @@ import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInsta
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.util.store.FileDataStoreFactory;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.security.GeneralSecurityException;
 
 import static ru.psu.martyshenko.trrp.lab1.app.GlobalSettings.*;
 
 public class AuthService {
 
-    public Credential auth(NetHttpTransport HTTP_TRANSPORT, String userName) throws IOException {
+    public Credential auth(String userName) throws IOException {
         // Load client secrets.
+        NetHttpTransport HTTP_TRANSPORT;
+        try {
+            HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+        } catch (GeneralSecurityException e) {
+            e.printStackTrace();
+            return null;
+        }
         InputStream in = AuthService.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
         if (in == null) {
             throw new FileNotFoundException("Resource not found: " + CREDENTIALS_FILE_PATH);
@@ -32,6 +38,42 @@ public class AuthService {
                 .setAccessType("offline")
                 .build();
         LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
-        return new AuthorizationCodeInstalledApp(flow, receiver).authorize(userName);
+        Credential credential = new AuthorizationCodeInstalledApp(flow, receiver).authorize(userName);
+        saveLastLogin(userName);
+        return credential;
+    }
+
+    private void saveLastLogin(String userName) {
+        File lastLogin = new File(LAST_LOGIN_FILE_PATH);
+        try {
+            PrintWriter writer = new PrintWriter(lastLogin);
+            writer.print(userName);
+            writer.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String checkLastLogin() {
+        File lastLogin = new File(LAST_LOGIN_FILE_PATH);
+        String userName;
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(lastLogin));
+            userName = br.readLine();
+        } catch (IOException e) {
+            return null;
+        }
+        return userName;
+    }
+
+    public void deleteLastLogindata() {
+        File lastLogin = new File(LAST_LOGIN_FILE_PATH);
+        try {
+            PrintWriter writer = new PrintWriter(lastLogin);
+            writer.print("");
+            writer.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 }
