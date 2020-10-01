@@ -6,13 +6,13 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.calendar.model.Event;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.logging.LogManager;
+import java.util.regex.Pattern;
 
 import static ru.psu.martyshenko.trrp.lab1.app.GlobalSettings.TOKENS_DIRECTORY_PATH;
 
@@ -23,9 +23,11 @@ public class Application {
     private static final AuthService authService = new AuthService();
     private static Credential credential = null;
 
-    public static void main(String[] args) {
-        LogManager.getLogManager().reset(); // Отключение логгера библиотеки гугл
-        org.mortbay.log.Log.setLog(null); // Отключение еще одного логгера библиотеки гугл
+    public static void main(String[] args) throws FileNotFoundException {
+        File file = new File("error.log");
+        FileOutputStream fos = new FileOutputStream(file, true);
+        PrintStream errorStream = new PrintStream(fos);
+        System.setErr(errorStream); // Перенаправление вывода всех ошибок в файл
         mainMenu();
     }
 
@@ -44,6 +46,7 @@ public class Application {
                     lastUser = null;
                 } catch (IOException e) {
                     System.out.println("Произошла ошибка при попытке входа с данными последнего пользователя.");
+                    e.printStackTrace();
                 }
             }
             System.out.println("Выберите опцию:");
@@ -103,6 +106,7 @@ public class Application {
                     credential = authService.auth(userName);
                 } catch (IOException e) {
                     System.out.println("Произошла ошибка при попытке авторизации.");
+                    e.printStackTrace();
                 }
                 option = 0;
             } else {
@@ -112,6 +116,7 @@ public class Application {
                         credential = authService.auth(userName);
                     } catch (IOException e) {
                         System.out.println("Произошла ошибка при попытке авторизации.");
+                        e.printStackTrace();
                     }
                     option = 0;
                 } else {
@@ -189,11 +194,7 @@ public class Application {
                     authService.deleteLastLogindata();
                     break;
                 case 1:
-                    try {
-                        eventService.showEvents();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    eventService.showEvents();
                     break;
                 case 2:
                     EventDto eventDto = new EventDto();
@@ -233,16 +234,32 @@ public class Application {
         System.out.println("0. Выход из учётной записи");
         System.out.println("9. Выход из приложения");
     }
+    private static Pattern DATE_PATTERN = Pattern.compile(
+            "^((19|2[0-9])[0-9]{2})-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01]) ([0-5][0-9]):([0-5][0-9])$");
 
     private static void prepareEventInfo(EventDto eventDto) {
         System.out.print("Введите заголовок: ");
         eventDto.setSummary(in.nextLine());
         System.out.print("Введите описание: ");
         eventDto.setDescription(in.nextLine());
-        System.out.println("Дата и время вводятся в формате 'yyyy-MM-dd hh:mm'");
+        System.out.println("Дата и время вводятся в формате <yyyy-MM-dd hh:mm>");
+
+        String from;
         System.out.print("Дата и время начала: ");
-        eventDto.setFrom(in.nextLine().replace(' ', 'T').concat(":00+05:00"));
+        from = in.nextLine();
+        while (!DATE_PATTERN.matcher(from).matches()) {
+            System.out.println("Некорректный ввод. Пожалуйста, введите дату и время в формте <yyyy-MM-dd hh:mm>");
+            from = in.nextLine();
+        }
+        eventDto.setFrom(from.replace(' ', 'T').concat(":00+05:00")); // +5 смещение по часовому поясу Екатеринбурга
+
+        String to;
         System.out.print("Дата и время окончания: ");
-        eventDto.setTo(in.nextLine().replace(' ', 'T').concat(":00+05:00"));
+        to = in.nextLine();
+        while (!DATE_PATTERN.matcher(to).matches()) {
+            System.out.println("Некорректный ввод. Пожалуйста, введите дату и время в формте <yyyy-MM-dd hh:mm>");
+            to = in.nextLine();
+        }
+        eventDto.setTo(from.replace(' ', 'T').concat(":00+05:00")); // +5 смещение по часовому поясу Екатеринбурга
     }
 }

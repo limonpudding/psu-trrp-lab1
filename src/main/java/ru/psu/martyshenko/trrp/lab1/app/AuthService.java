@@ -11,6 +11,7 @@ import com.google.api.client.util.store.FileDataStoreFactory;
 
 import java.io.*;
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
 
 import static ru.psu.martyshenko.trrp.lab1.app.GlobalSettings.*;
 
@@ -61,6 +62,18 @@ public class AuthService {
             BufferedReader br = new BufferedReader(new FileReader(lastLogin));
             userName = br.readLine();
         } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        try {
+            FileDataStoreFactory storedCredentialData = new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH));
+            ArrayList<String> storedCredential = new ArrayList<>(storedCredentialData.getDataStore("StoredCredential").keySet());
+            if (!storedCredential.contains(userName)) {
+                return null;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
             return null;
         }
         return userName;

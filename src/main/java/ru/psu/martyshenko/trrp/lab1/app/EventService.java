@@ -30,17 +30,25 @@ public class EventService {
             calendarId = "primary";
         } catch (GeneralSecurityException | IOException e) {
             System.out.println("Ошибка при попытке установить соединение!");
+            e.printStackTrace();
         }
     }
 
-    public void showEvents() throws IOException {
+    public void showEvents() {
         DateTime now = new DateTime(System.currentTimeMillis());
-        Events events = calendar.events().list(calendarId)
-                .setMaxResults(10)
-                .setTimeMin(now)
-                .setOrderBy("startTime")
-                .setSingleEvents(true)
-                .execute();
+        Events events;
+        try {
+            events = calendar.events().list(calendarId)
+                    .setMaxResults(10)
+                    .setTimeMin(now)
+                    .setOrderBy("startTime")
+                    .setSingleEvents(true)
+                    .execute();
+        } catch (IOException e) {
+            System.out.println("Ошибка при попытке загрузки предстоящих событий!");
+            e.printStackTrace();
+            return;
+        }
         List<Event> items = events.getItems();
         if (items.isEmpty()) {
             System.out.println("Не найдено предстоящих событий.");
@@ -65,6 +73,7 @@ public class EventService {
             System.out.printf("Создано новое событие: %s\n", event.getHtmlLink());
         } catch (IOException e) {
             System.out.println("Произошла ошибка при сохранении события в Google Календарь.");
+            e.printStackTrace();
         }
     }
 
@@ -82,6 +91,7 @@ public class EventService {
             }
         } catch (IOException e) {
             System.out.println("Произошла ошибка во время поиска события в Google Календарь.");
+            e.printStackTrace();
         }
         return event;
     }
@@ -104,6 +114,7 @@ public class EventService {
                 System.out.println("Событие успешно удалено.\n");
             } catch (IOException e) {
                 System.out.println("Произошла ошибка при удалении события в Google Календарь.\n");
+                e.printStackTrace();
             }
         }
     }
@@ -115,6 +126,7 @@ public class EventService {
             System.out.printf("Событие успешно обновлено: %s\n\n", event.getHtmlLink());
         } catch (IOException e) {
             System.out.println("Произошла ошибка при сохранении события в Google Календарь.\n");
+            e.printStackTrace();
         }
     }
 
