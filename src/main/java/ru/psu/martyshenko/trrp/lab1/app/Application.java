@@ -60,7 +60,7 @@ public class Application {
                 case 1:
                     String user = selectProfile();
                     if (user != null) {
-                        isExit = selectAction(lastUser);
+                        isExit = selectAction(user);
                         if (isExit) {
                             option = 0;
                         }
@@ -260,6 +260,6 @@ public class Application {
             System.out.println("Некорректный ввод. Пожалуйста, введите дату и время в формте <yyyy-MM-dd hh:mm>");
             to = in.nextLine();
         }
-        eventDto.setTo(from.replace(' ', 'T').concat(":00+05:00")); // +5 смещение по часовому поясу Екатеринбурга
+        eventDto.setTo(to.replace(' ', 'T').concat(":00+05:00")); // +5 смещение по часовому поясу Екатеринбурга
     }
 }
